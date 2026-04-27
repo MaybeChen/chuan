@@ -12,26 +12,25 @@ import { topologyData } from '../data/topology'
 const containerRef = ref<HTMLDivElement | null>(null)
 let graph: G6.Graph | null = null
 
-const levelOrder = ['概念抽象层对象', '知识层对象', '状态层对象', '资源层对象-物理资源', '资源层对象-环境', '资源层对象-逻辑资源', '资源层对象-业务']
+const levelOrder = ['概念抽象层对象', '知识层对象', '状态层对象', '资源层对象']
 
 const layerY: Record<string, number> = {
   概念抽象层对象: 90,
-  知识层对象: 220,
-  状态层对象: 350,
-  '资源层对象-逻辑资源': 470,
-  '资源层对象-物理资源': 600,
-  '资源层对象-环境': 730,
-  '资源层对象-业务': 830
+  知识层对象: 250,
+  状态层对象: 410,
+  资源层对象: 590
 }
 
 const colorByGroup: Record<string, string> = {
   概念抽象层对象: '#6366f1',
   知识层对象: '#14b8a6',
   状态层对象: '#f59e0b',
-  '资源层对象-逻辑资源': '#60a5fa',
-  '资源层对象-物理资源': '#10b981',
-  '资源层对象-环境': '#8b5cf6',
-  '资源层对象-业务': '#ef4444'
+  资源层对象: '#60a5fa'
+}
+
+function normalizeGroup(viewGroup: string): string {
+  if (viewGroup.startsWith('资源层对象')) return '资源层对象'
+  return viewGroup
 }
 
 function shortId(raw: string): string {
@@ -43,20 +42,21 @@ onMounted(() => {
   if (!containerRef.value) return
 
   const width = containerRef.value.clientWidth
-  const height = 920
+  const height = 760
 
   const groups = new Map<string, typeof topologyData.objects>()
   topologyData.objects.forEach((obj) => {
-    if (!groups.has(obj.viewGroup)) {
-      groups.set(obj.viewGroup, [])
+    const group = normalizeGroup(obj.viewGroup)
+    if (!groups.has(group)) {
+      groups.set(group, [])
     }
-    groups.get(obj.viewGroup)?.push(obj)
+    groups.get(group)?.push(obj)
   })
 
   const nodes = Array.from(groups.entries()).flatMap(([group, items]) => {
     const sorted = [...items].sort((a, b) => a.standardName.localeCompare(b.standardName))
     const spacing = width / (sorted.length + 1)
-    const y = layerY[group] ?? 860
+    const y = layerY[group] ?? 680
 
     return sorted.map((item, index) => ({
       id: item.id,
@@ -65,18 +65,18 @@ onMounted(() => {
       group,
       x: Math.round((index + 1) * spacing),
       y,
-      size: 42,
+      size: 36,
       style: {
-        fill: '#fff',
-        stroke: colorByGroup[group] ?? '#64748b',
+        fill: '#e2e8f0',
+        stroke: '#f8fafc',
         lineWidth: 2,
         shadowBlur: 10,
-        shadowColor: 'rgba(15, 23, 42, 0.08)'
+        shadowColor: 'rgba(15, 23, 42, 0.25)'
       },
       labelCfg: {
         style: {
           fontSize: 11,
-          fill: '#0f172a'
+          fill: '#f8fafc'
         },
         position: 'bottom' as const,
         offset: 8
@@ -94,8 +94,8 @@ onMounted(() => {
       target: edge.dstVid,
       label,
       style: {
-        stroke: isAffect ? '#ef4444' : '#64748b',
-        lineWidth: isAffect ? 2 : 1.5,
+        stroke: isAffect ? '#fef2f2' : '#cbd5e1',
+        lineWidth: isAffect ? 2.2 : 1.5,
         endArrow: true,
         lineDash: isAffect ? undefined : [6, 4],
         opacity: 0.9
@@ -103,10 +103,10 @@ onMounted(() => {
       labelCfg: {
         autoRotate: true,
         style: {
-          fill: '#334155',
+          fill: '#e2e8f0',
           fontSize: 10,
           background: {
-            fill: '#ffffffcc',
+            fill: '#334155cc',
             radius: 2,
             padding: [2, 4, 2, 4]
           }
@@ -126,7 +126,7 @@ onMounted(() => {
       type: 'circle'
     },
     defaultEdge: {
-      type: 'quadratic'
+      type: 'cubic-horizontal'
     },
     plugins: [
       new G6.Tooltip({
@@ -143,35 +143,52 @@ onMounted(() => {
   graph.render()
 
   const canvas = graph.get('canvas')
+  const layerShapes: Array<{ toBack: () => void }> = []
   levelOrder.forEach((group) => {
     const y = layerY[group]
     if (!y) return
-    canvas.addShape('rect', {
+    const topY = y - 44
+    const bottomY = y + 28
+    const leftX = 60
+    const rightX = width - 60
+    const skew = 36
+    const bgPath = [
+      ['M', leftX, topY],
+      ['L', rightX, topY],
+      ['L', rightX - skew, bottomY],
+      ['L', leftX + skew, bottomY],
+      ['Z']
+    ]
+    const shape = canvas.addShape('path', {
       attrs: {
-        x: 20,
-        y: y - 40,
-        width: width - 40,
-        height: 85,
-        fill: '#94a3b833',
-        stroke: '#94a3b8',
-        radius: 8
+        path: bgPath,
+        fill: colorByGroup[group] ?? '#475569',
+        opacity: 0.35,
+        stroke: '#cbd5e1',
+        lineWidth: 1.2,
+        shadowBlur: 12,
+        shadowColor: 'rgba(15, 23, 42, 0.25)',
+        shadowOffsetY: 4
       },
       draggable: false,
       name: `layer-${group}`
     })
-    canvas.addShape('text', {
+    const text = canvas.addShape('text', {
       attrs: {
-        x: 28,
-        y: y - 26,
+        x: width / 2,
+        y: y - 8,
         text: group,
-        fill: '#334155',
-        fontSize: 12,
+        fill: '#f8fafc',
+        fontSize: 14,
+        textAlign: 'center',
         fontWeight: 600
       },
       draggable: false,
       name: `layer-text-${group}`
     })
+    layerShapes.push(shape, text)
   })
+  layerShapes.forEach((shape) => shape.toBack())
 
   graph.getEdges().forEach((edgeItem) => edgeItem.toFront())
   graph.getNodes().forEach((nodeItem) => nodeItem.toFront())
@@ -181,7 +198,7 @@ onMounted(() => {
 
 function onResize(): void {
   if (!graph || !containerRef.value) return
-  graph.changeSize(containerRef.value.clientWidth, 920)
+  graph.changeSize(containerRef.value.clientWidth, 760)
 }
 
 onUnmounted(() => {
@@ -201,9 +218,9 @@ onUnmounted(() => {
 
 .graph-container {
   width: 100%;
-  height: 920px;
+  height: 760px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  background: radial-gradient(circle at top, #64748b 0%, #1e293b 58%, #0f172a 100%);
 }
 </style>
