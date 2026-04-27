@@ -120,13 +120,25 @@ onMounted(() => {
     width,
     height,
     modes: {
-      default: ['drag-canvas', 'zoom-canvas', 'drag-node']
+      default: ['drag-canvas', 'zoom-canvas']
     },
     defaultNode: {
       type: 'circle'
     },
     defaultEdge: {
       type: 'cubic-horizontal'
+    },
+    edgeStateStyles: {
+      active: {
+        stroke: '#facc15',
+        lineWidth: 3,
+        shadowBlur: 10,
+        shadowColor: 'rgba(250, 204, 21, 0.6)',
+        opacity: 1
+      },
+      inactive: {
+        opacity: 0.2
+      }
     },
     plugins: [
       new G6.Tooltip({
@@ -192,6 +204,24 @@ onMounted(() => {
 
   graph.getEdges().forEach((edgeItem) => edgeItem.toFront())
   graph.getNodes().forEach((nodeItem) => nodeItem.toFront())
+
+  graph.on('node:click', (evt) => {
+    const currentNode = evt.item
+    if (!currentNode) return
+
+    graph?.getEdges().forEach((edge) => {
+      const model = edge.getModel()
+      const connected = model.source === currentNode.getID() || model.target === currentNode.getID()
+      graph?.setItemState(edge, 'active', connected)
+      graph?.setItemState(edge, 'inactive', !connected)
+    })
+  })
+
+  graph.on('canvas:click', () => {
+    graph?.getEdges().forEach((edge) => {
+      graph?.clearItemStates(edge, ['active', 'inactive'])
+    })
+  })
 
   window.addEventListener('resize', onResize)
 })
