@@ -48,7 +48,6 @@ if (!G6['__trapezoidLaneRegistered']) {
         const skew = Number(cfg?.skew ?? 42)
         const fill = String(cfg?.color ?? 'l(0) 0:#9ca3af 1:#6b7280')
         const label = String(cfg?.label ?? '')
-        const info = String(cfg?.info ?? '')
         const depth = Number(cfg?.depth ?? 14)
         const path = [
           ['M', -width / 2 + skew, -height / 2],
@@ -87,28 +86,16 @@ if (!G6['__trapezoidLaneRegistered']) {
         })
         group!.addShape('text', {
           attrs: {
-            x: 0,
-            y: 4,
+            x: -width / 2 + 14,
+            y: height / 2 - 8,
             text: label,
-            fill: '#f8fafc',
-            fontSize: 14,
-            textAlign: 'center',
+            fill: '#e5e7eb',
+            fontSize: 11,
+            textAlign: 'left',
             textBaseline: 'middle',
             fontWeight: 700
           },
           name: 'lane-label'
-        })
-        group!.addShape('text', {
-          attrs: {
-            x: -width / 2 + 14,
-            y: height / 2 - 8,
-            text: info,
-            fill: '#e5e7eb',
-            fontSize: 10,
-            textAlign: 'left',
-            textBaseline: 'middle'
-          },
-          name: 'lane-info'
         })
         return shape
       }
@@ -139,7 +126,6 @@ onMounted(() => {
     x: Math.round(width / 2),
     y: layerY[group],
     label: group,
-    info: `层级信息-${group}`,
     size: [Math.max(width - 60, 560), 86],
     color: colorByGroup[group] ?? '#475569',
     skew: 48,
