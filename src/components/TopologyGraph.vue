@@ -159,19 +159,20 @@ onMounted(() => {
       target: edge.dstVid,
       label,
       style: {
-        stroke: isAffect ? '#fef2f2' : '#cbd5e1',
-        lineWidth: isAffect ? 2.2 : 1.5,
+        stroke: isAffect ? '#ef4444' : '#0ea5e9',
+        lineWidth: isAffect ? 2.6 : 2.1,
         endArrow: true,
-        lineDash: isAffect ? undefined : [6, 4],
-        opacity: 0.9
+        lineDash: isAffect ? undefined : [8, 4],
+        opacity: 1
       },
       labelCfg: {
         autoRotate: true,
         style: {
-          fill: '#e2e8f0',
-          fontSize: 10,
+          fill: '#0f172a',
+          fontSize: 11,
+          fontWeight: 600,
           background: {
-            fill: '#334155cc',
+            fill: '#f8fafce6',
             radius: 2,
             padding: [2, 4, 2, 4]
           }
@@ -196,13 +197,13 @@ onMounted(() => {
     edgeStateStyles: {
       active: {
         stroke: '#facc15',
-        lineWidth: 3,
+        lineWidth: 3.2,
         shadowBlur: 10,
         shadowColor: 'rgba(250, 204, 21, 0.6)',
         opacity: 1
       },
       inactive: {
-        opacity: 0.2
+        opacity: 0.12
       }
     },
     plugins: [
