@@ -22,10 +22,10 @@ const layerY: Record<string, number> = {
 }
 
 const colorByGroup: Record<string, string> = {
-  概念抽象层对象: '#6366f1',
-  知识层对象: '#14b8a6',
-  状态层对象: '#f59e0b',
-  资源层对象: '#60a5fa'
+  概念抽象层对象: 'l(0) 0:#9ca3af 1:#6b7280',
+  知识层对象: 'l(0) 0:#9ca3af 1:#6b7280',
+  状态层对象: 'l(0) 0:#94a3b8 1:#64748b',
+  资源层对象: 'l(0) 0:#9ca3af 1:#6b7280'
 }
 
 function normalizeGroup(viewGroup: string): string {
@@ -46,27 +46,44 @@ if (!G6['__trapezoidLaneRegistered']) {
         const width = Number(cfg?.size?.[0] ?? 920)
         const height = Number(cfg?.size?.[1] ?? 82)
         const skew = Number(cfg?.skew ?? 42)
-        const fill = String(cfg?.color ?? '#64748b')
+        const fill = String(cfg?.color ?? 'l(0) 0:#9ca3af 1:#6b7280')
         const label = String(cfg?.label ?? '')
+        const info = String(cfg?.info ?? '')
+        const depth = Number(cfg?.depth ?? 14)
         const path = [
-          ['M', -width / 2, -height / 2],
-          ['L', width / 2, -height / 2],
-          ['L', width / 2 - skew, height / 2],
-          ['L', -width / 2 + skew, height / 2],
+          ['M', -width / 2 + skew, -height / 2],
+          ['L', width / 2 - skew, -height / 2],
+          ['L', width / 2, height / 2],
+          ['L', -width / 2, height / 2],
+          ['Z']
+        ]
+        const depthPath = [
+          ['M', -width / 2, height / 2],
+          ['L', width / 2, height / 2],
+          ['L', width / 2 - 14, height / 2 + depth],
+          ['L', -width / 2 + 14, height / 2 + depth],
           ['Z']
         ]
         const shape = group!.addShape('path', {
           attrs: {
             path,
             fill,
-            opacity: 0.55,
-            stroke: '#cbd5e1',
+            opacity: 0.9,
+            stroke: '#d1d5db',
             lineWidth: 1.2,
             shadowBlur: 16,
-            shadowColor: 'rgba(15, 23, 42, 0.3)',
+            shadowColor: 'rgba(15, 23, 42, 0.18)',
             shadowOffsetY: 6
           },
           name: 'lane-bg'
+        })
+        group!.addShape('path', {
+          attrs: {
+            path: depthPath,
+            fill: 'l(0) 0:#6b7280 1:#4b5563',
+            opacity: 0.35
+          },
+          name: 'lane-depth'
         })
         group!.addShape('text', {
           attrs: {
@@ -80,6 +97,18 @@ if (!G6['__trapezoidLaneRegistered']) {
             fontWeight: 700
           },
           name: 'lane-label'
+        })
+        group!.addShape('text', {
+          attrs: {
+            x: -width / 2 + 14,
+            y: height / 2 - 8,
+            text: info,
+            fill: '#e5e7eb',
+            fontSize: 10,
+            textAlign: 'left',
+            textBaseline: 'middle'
+          },
+          name: 'lane-info'
         })
         return shape
       }
@@ -110,6 +139,7 @@ onMounted(() => {
     x: Math.round(width / 2),
     y: layerY[group],
     label: group,
+    info: `层级信息-${group}`,
     size: [Math.max(width - 60, 560), 86],
     color: colorByGroup[group] ?? '#475569',
     skew: 48,
@@ -274,6 +304,6 @@ onUnmounted(() => {
   height: 760px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  background: radial-gradient(circle at top, #64748b 0%, #1e293b 58%, #0f172a 100%);
+  background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%);
 }
 </style>
