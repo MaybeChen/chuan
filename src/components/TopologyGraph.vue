@@ -11,6 +11,9 @@ import { topologyData } from '../data/topology'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 let graph: G6.Graph | null = null
+const alarmIcon = '/assets/alarm.svg'
+const kpiIcon = '/assets/kpi.svg'
+const normalIcon = '/assets/normal.png'
 
 const levelOrder = ['概念抽象层对象', '知识层对象', '状态层对象', '资源层对象']
 
@@ -36,6 +39,12 @@ function normalizeGroup(viewGroup: string): string {
 function shortId(raw: string): string {
   const last = raw.split(':')[3] || raw
   return last.length > 18 ? `${last.slice(0, 18)}...` : last
+}
+
+function pickNodeIcon(name: string): string {
+  if (name.includes('Alarm') || name.includes('告警')) return alarmIcon
+  if (name.includes('KPI')) return kpiIcon
+  return normalIcon
 }
 
 if (!G6['__trapezoidLaneRegistered']) {
@@ -126,21 +135,17 @@ onMounted(() => {
       label: shortId(item.standardName),
       fullLabel: item.standardName,
       group,
+      type: 'image',
+      img: pickNodeIcon(item.standardName),
       x: Math.round((index + 1) * spacing),
       y,
-      size: 36,
+      size: 32,
       isLayer: false,
-      style: {
-        fill: '#e2e8f0',
-        stroke: '#f8fafc',
-        lineWidth: 2,
-        shadowBlur: 10,
-        shadowColor: 'rgba(15, 23, 42, 0.25)'
-      },
       labelCfg: {
         style: {
-          fontSize: 11,
-          fill: '#f8fafc'
+          fontSize: 10,
+          fill: '#f8fafc',
+          fontWeight: 600
         },
         position: 'bottom' as const,
         offset: 8
