@@ -38,6 +38,57 @@ function shortId(raw: string): string {
   return last.length > 18 ? `${last.slice(0, 18)}...` : last
 }
 
+if (!G6['__trapezoidLaneRegistered']) {
+  G6.registerNode(
+    'trapezoid-lane',
+    {
+      draw(cfg, group) {
+        const width = Number(cfg?.size?.[0] ?? 920)
+        const height = Number(cfg?.size?.[1] ?? 82)
+        const skew = Number(cfg?.skew ?? 42)
+        const fill = String(cfg?.color ?? '#64748b')
+        const label = String(cfg?.label ?? '')
+        const path = [
+          ['M', -width / 2, -height / 2],
+          ['L', width / 2, -height / 2],
+          ['L', width / 2 - skew, height / 2],
+          ['L', -width / 2 + skew, height / 2],
+          ['Z']
+        ]
+        const shape = group!.addShape('path', {
+          attrs: {
+            path,
+            fill,
+            opacity: 0.55,
+            stroke: '#cbd5e1',
+            lineWidth: 1.2,
+            shadowBlur: 16,
+            shadowColor: 'rgba(15, 23, 42, 0.3)',
+            shadowOffsetY: 6
+          },
+          name: 'lane-bg'
+        })
+        group!.addShape('text', {
+          attrs: {
+            x: 0,
+            y: 4,
+            text: label,
+            fill: '#f8fafc',
+            fontSize: 14,
+            textAlign: 'center',
+            textBaseline: 'middle',
+            fontWeight: 700
+          },
+          name: 'lane-label'
+        })
+        return shape
+      }
+    },
+    'single-node'
+  )
+  G6['__trapezoidLaneRegistered'] = true
+}
+
 onMounted(() => {
   if (!containerRef.value) return
 
@@ -53,7 +104,19 @@ onMounted(() => {
     groups.get(group)?.push(obj)
   })
 
-  const nodes = Array.from(groups.entries()).flatMap(([group, items]) => {
+  const laneNodes = levelOrder.map((group) => ({
+    id: `layer-${group}`,
+    type: 'trapezoid-lane',
+    x: Math.round(width / 2),
+    y: layerY[group],
+    label: group,
+    size: [Math.max(width - 60, 560), 86],
+    color: colorByGroup[group] ?? '#475569',
+    skew: 48,
+    isLayer: true
+  }))
+
+  const dataNodes = Array.from(groups.entries()).flatMap(([group, items]) => {
     const sorted = [...items].sort((a, b) => a.standardName.localeCompare(b.standardName))
     const spacing = width / (sorted.length + 1)
     const y = layerY[group] ?? 680
@@ -66,6 +129,7 @@ onMounted(() => {
       x: Math.round((index + 1) * spacing),
       y,
       size: 36,
+      isLayer: false,
       style: {
         fill: '#e2e8f0',
         stroke: '#f8fafc',
@@ -83,6 +147,7 @@ onMounted(() => {
       }
     }))
   })
+  const nodes = [...laneNodes, ...dataNodes]
 
   const edges = topologyData.edges.map((edge, index) => {
     const isThreshold = edge.function.type === 'Threshold'
@@ -145,6 +210,7 @@ onMounted(() => {
         itemTypes: ['node'],
         getContent: (evt) => {
           const model = evt.item?.getModel() as { fullLabel?: string; group?: string } | undefined
+          if (model?.isLayer) return '<div style="padding:6px 8px;">分层背景</div>'
           return `<div style="padding:6px 8px;">${model?.fullLabel ?? ''}<br/><small>${model?.group ?? ''}</small></div>`
         }
       })
@@ -154,60 +220,17 @@ onMounted(() => {
   graph.data({ nodes, edges })
   graph.render()
 
-  const canvas = graph.get('canvas')
-  const layerShapes: Array<{ toBack: () => void }> = []
-  levelOrder.forEach((group) => {
-    const y = layerY[group]
-    if (!y) return
-    const topY = y - 44
-    const bottomY = y + 28
-    const leftX = 60
-    const rightX = width - 60
-    const skew = 36
-    const bgPath = [
-      ['M', leftX, topY],
-      ['L', rightX, topY],
-      ['L', rightX - skew, bottomY],
-      ['L', leftX + skew, bottomY],
-      ['Z']
-    ]
-    const shape = canvas.addShape('path', {
-      attrs: {
-        path: bgPath,
-        fill: colorByGroup[group] ?? '#475569',
-        opacity: 0.35,
-        stroke: '#cbd5e1',
-        lineWidth: 1.2,
-        shadowBlur: 12,
-        shadowColor: 'rgba(15, 23, 42, 0.25)',
-        shadowOffsetY: 4
-      },
-      draggable: false,
-      name: `layer-${group}`
-    })
-    const text = canvas.addShape('text', {
-      attrs: {
-        x: width / 2,
-        y: y - 8,
-        text: group,
-        fill: '#f8fafc',
-        fontSize: 14,
-        textAlign: 'center',
-        fontWeight: 600
-      },
-      draggable: false,
-      name: `layer-text-${group}`
-    })
-    layerShapes.push(shape, text)
-  })
-  layerShapes.forEach((shape) => shape.toBack())
-
   graph.getEdges().forEach((edgeItem) => edgeItem.toFront())
-  graph.getNodes().forEach((nodeItem) => nodeItem.toFront())
+  graph.getNodes().forEach((nodeItem) => {
+    const model = nodeItem.getModel() as { isLayer?: boolean }
+    if (!model.isLayer) nodeItem.toFront()
+  })
 
   graph.on('node:click', (evt) => {
     const currentNode = evt.item
     if (!currentNode) return
+    const currentModel = currentNode.getModel() as { isLayer?: boolean }
+    if (currentModel.isLayer) return
 
     graph?.getEdges().forEach((edge) => {
       const model = edge.getModel()
