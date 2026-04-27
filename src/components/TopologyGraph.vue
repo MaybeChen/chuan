@@ -11,9 +11,14 @@ import { topologyData } from '../data/topology'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 let graph: G6.Graph | null = null
-const alarmIcon = '/assets/alarm.svg'
-const kpiIcon = '/assets/kpi.svg'
-const normalIcon = '/assets/normal.png'
+
+function resolveIconUrl(filename: string): string {
+  return new URL(`../assets/${filename}`, import.meta.url).href
+}
+
+const alarmIcon = resolveIconUrl('alarm.svg')
+const kpiIcon = resolveIconUrl('kpi.svg')
+const normalIcon = resolveIconUrl('normal.png')
 
 const levelOrder = ['概念抽象层对象', '知识层对象', '状态层对象', '资源层对象']
 
