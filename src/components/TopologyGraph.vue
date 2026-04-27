@@ -48,19 +48,11 @@ if (!G6['__trapezoidLaneRegistered']) {
         const skew = Number(cfg?.skew ?? 42)
         const fill = String(cfg?.color ?? 'l(0) 0:#9ca3af 1:#6b7280')
         const label = String(cfg?.label ?? '')
-        const depth = Number(cfg?.depth ?? 14)
         const path = [
           ['M', -width / 2 + skew, -height / 2],
           ['L', width / 2 - skew, -height / 2],
           ['L', width / 2, height / 2],
           ['L', -width / 2, height / 2],
-          ['Z']
-        ]
-        const depthPath = [
-          ['M', -width / 2, height / 2],
-          ['L', width / 2, height / 2],
-          ['L', width / 2 - 14, height / 2 + depth],
-          ['L', -width / 2 + 14, height / 2 + depth],
           ['Z']
         ]
         const shape = group!.addShape('path', {
@@ -70,19 +62,11 @@ if (!G6['__trapezoidLaneRegistered']) {
             opacity: 0.9,
             stroke: '#d1d5db',
             lineWidth: 1.2,
-            shadowBlur: 16,
-            shadowColor: 'rgba(15, 23, 42, 0.18)',
-            shadowOffsetY: 6
+            shadowBlur: 8,
+            shadowColor: 'rgba(15, 23, 42, 0.12)',
+            shadowOffsetY: 2
           },
           name: 'lane-bg'
-        })
-        group!.addShape('path', {
-          attrs: {
-            path: depthPath,
-            fill: 'l(0) 0:#6b7280 1:#4b5563',
-            opacity: 0.35
-          },
-          name: 'lane-depth'
         })
         group!.addShape('text', {
           attrs: {
